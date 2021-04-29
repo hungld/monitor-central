@@ -3,7 +3,7 @@ apiVersion: 1
 
 # list of datasources that should be deleted from the database
 deleteDatasources:
-  - name: thanos_query_frontend1
+  - name: Thanos
     orgId: 1
 
 # list of datasources to insert/update depending
