@@ -1,0 +1,65 @@
+global:
+  scrape_interval: 15s 
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'NTL'
+    replica: 'r1'
+
+rule_files:
+  - 'alert.rules'
+
+alerting:
+  alertmanagers:
+    - scheme: http
+      static_configs:
+        - targets:
+            - 'alertmanager:9093'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: 
+          - 'prometheus1:9001'
+          - 'prometheus2:9002'
+          - 'prometheus3:9003'
+          - 'prometheus4:9004'
+
+  - job_name: 'thanos'
+    scrape_interval: 5s
+    static_configs:
+      - targets:
+          - 'thanos_sidecar1:10902'
+          - 'thanos_sidecar2:10902'
+          - 'thanos_sidecar3:10902'
+          - 'thanos_sidecar4:10902'
+          - 'thanos_querier1:10902'
+          - 'thanos_querier2:10902'
+          - 'thanos_querier3:10902'
+          - 'thanos_querier4:10902'
+          - 'thanos_query_frontend1:9990'
+          - 'thanos_query_frontend2:9990'
+          - 'thanos_store1:10902'
+          - 'thanos_store2:10902'
+          - 'thanos_compactor:10902'
+          - 'thanos_bucket_web:9000'
+          - 'thanos_ruler:10902'
+
+  - job_name: 'minio'
+    scrape_interval: 5s
+    static_configs:
+      - targets: 
+          - 'minio:9000'
+    metrics_path: /minio/prometheus/metrics
+
+  - job_name: 'cadvisor'
+    scrape_interval: 5s
+    static_configs:
+      - targets:
+          - 'cadvisor:8080'
+
+  - job_name: 'node-exporter'
+    scrape_interval: 5s
+    static_configs:
+      - targets:
+          - 'node-exporter:9100'

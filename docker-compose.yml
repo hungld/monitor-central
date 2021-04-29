@@ -1,0 +1,679 @@
+version: '3.2'
+services:
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    hostname: minio  
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+    networks:
+      - thanos
+    environment:
+      MINIO_PROMETHEUS_AUTH_TYPE: public
+      MINIO_ACCESS_KEY: myaccesskey
+      MINIO_SECRET_KEY: mysecretkey
+    entrypoint: sh
+    command: -c 'mkdir -p /data/monitor-bucket && /usr/bin/minio server /data'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  prometheus1:
+    image: prom/prometheus:v2.26.0
+    container_name: prometheus1
+    user: root
+    volumes:
+      - prometheus1_data:/data
+      - ./prometheus:/etc/prometheus/      
+    command:
+      - '--config.file=/etc/prometheus/prometheus1.yml'
+      - '--storage.tsdb.path=/data'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--storage.tsdb.retention.time=2h'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+      - '--web.listen-address=:9001'
+      - '--storage.tsdb.min-block-duration=30m'
+      - '--storage.tsdb.max-block-duration=30m'
+    restart: unless-stopped
+    expose:
+      - 9001
+    networks:
+      - thanos
+
+  prometheus2:
+    image: prom/prometheus:v2.26.0
+    container_name: prometheus2
+    user: root
+    volumes:
+      - prometheus2_data:/data
+      - ./prometheus:/etc/prometheus/      
+    command:
+      - '--config.file=/etc/prometheus/prometheus2.yml'
+      - '--storage.tsdb.path=/data'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--storage.tsdb.retention.time=2h'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+      - '--web.listen-address=:9002'
+      - '--storage.tsdb.min-block-duration=30m'
+      - '--storage.tsdb.max-block-duration=30m'
+    restart: unless-stopped
+    expose:
+      - 9002
+    networks:
+      - thanos
+
+  prometheus3:
+    image: prom/prometheus:v2.26.0
+    container_name: prometheus3
+    user: root
+    volumes:
+      - prometheus3_data:/data
+      - ./prometheus:/etc/prometheus/      
+    command:
+      - '--config.file=/etc/prometheus/prometheus3.yml'
+      - '--storage.tsdb.path=/data'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--storage.tsdb.retention.time=2h'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+      - '--web.listen-address=:9003'
+      - '--storage.tsdb.min-block-duration=30m'
+      - '--storage.tsdb.max-block-duration=30m'
+    restart: unless-stopped
+    expose:
+      - 9003
+    networks:
+      - thanos
+
+  prometheus4:
+    image: prom/prometheus:v2.26.0
+    container_name: prometheus4
+    user: root
+    volumes:
+      - prometheus4_data:/data
+      - ./prometheus:/etc/prometheus/      
+    command:
+      - '--config.file=/etc/prometheus/prometheus4.yml'
+      - '--storage.tsdb.path=/data'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--storage.tsdb.retention.time=2h'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+      - '--web.listen-address=:9004'
+      - '--storage.tsdb.min-block-duration=30m'
+      - '--storage.tsdb.max-block-duration=30m'
+    restart: unless-stopped
+    expose:
+      - 9004
+    networks:
+      - thanos
+
+  thanos_sidecar1:
+    image: thanosio/thanos:v0.19.0
+    container_name: thanos_sidecar1
+    command:
+      - "sidecar"
+      - "--debug.name=thanos_sidecar1"
+      - "--log.level=debug"
+      - "--grpc-address=0.0.0.0:10911"
+      - "--grpc-grace-period=1s"
+      - "--http-address=0.0.0.0:10912"
+      - "--http-grace-period=1s"
+      - "--prometheus.url=http://prometheus1:9001"
+      - "--tsdb.path=/prometheus"
+      - "--objstore.config-file=/etc/thanos/bucket.yml"
+    volumes:
+      - ./thanos/:/etc/thanos/
+      - prometheus1_data:/prometheus
+    expose:
+      - 10911
+      - 10912
+    depends_on:
+      - minio
+      - prometheus1
+    networks:
+      - thanos
+
+  thanos_sidecar2:
+    image: thanosio/thanos:v0.19.0
+    container_name: thanos_sidecar2
+    command:
+      - "sidecar"
+      - "--debug.name=thanos_sidecar2"
+      - "--log.level=debug"
+      - "--grpc-address=0.0.0.0:10921"
+      - "--grpc-grace-period=1s"
+      - "--http-address=0.0.0.0:10922"
+      - "--http-grace-period=1s"
+      - "--prometheus.url=http://prometheus2:9002"
+      - "--tsdb.path=/prometheus"
+      - "--objstore.config-file=/etc/thanos/bucket.yml"
+    volumes:
+      - ./thanos/:/etc/thanos/
+      - prometheus2_data:/prometheus
+    expose:
+      - 10921
+      - 10922
+    depends_on:
+      - minio
+      - prometheus2
+    networks:
+      - thanos
+
+  thanos_sidecar3:
+    image: thanosio/thanos:v0.19.0
+    container_name: thanos_sidecar3
+    command:
+      - "sidecar"
+      - "--debug.name=thanos_sidecar3"
+      - "--log.level=debug"
+      - "--grpc-address=0.0.0.0:10931"
+      - "--grpc-grace-period=1s"
+      - "--http-address=0.0.0.0:10932"
+      - "--http-grace-period=1s"
+      - "--prometheus.url=http://prometheus3:9003"
+      - "--tsdb.path=/prometheus"
+      - "--objstore.config-file=/etc/thanos/bucket.yml"
+    volumes:
+      - ./thanos/:/etc/thanos/
+      - prometheus3_data:/prometheus
+    expose:
+      - 10931
+      - 10932
+    depends_on:
+      - minio
+      - prometheus3
+    networks:
+      - thanos
+
+  thanos_sidecar4:
+    image: thanosio/thanos:v0.19.0
+    container_name: thanos_sidecar4
+    command:
+      - "sidecar"
+      - "--debug.name=thanos_sidecar4"
+      - "--log.level=debug"
+      - "--grpc-address=0.0.0.0:10941"
+      - "--grpc-grace-period=1s"
+      - "--http-address=0.0.0.0:10942"
+      - "--http-grace-period=1s"
+      - "--prometheus.url=http://prometheus4:9004"
+      - "--tsdb.path=/prometheus"
+      - "--objstore.config-file=/etc/thanos/bucket.yml"
+    volumes:
+      - ./thanos/:/etc/thanos/
+      - prometheus4_data:/prometheus
+    expose:
+      - 10941
+      - 10942
+    depends_on:
+      - minio
+      - prometheus4
+    networks:
+      - thanos
+
+  prometheus_remote:
+    image: prom/prometheus:v2.26.0
+    container_name: prometheus_remote
+    user: root
+    volumes:
+      - prometheus_remote_data:/data
+      - ./prometheus:/etc/prometheus/
+    command:
+      - '--config.file=/etc/prometheus/prometheus_remote.yml'
+      - '--storage.tsdb.path=/data'
+      - '--web.listen-address=:9005'
+    restart: unless-stopped
+    expose:
+      - 9005
+    ports:
+      - "9005:9005"
+    networks:
+      - thanos
+ 
+  thanos_receive:
+    image: thanosio/thanos:v0.19.0
+    container_name: thanos_receive
+    command:
+      - "receive"
+      - "--debug.name=thanos_receive"
+      - "--log.level=debug"
+      - "--tsdb.path=/prometheus"
+      - "--grpc-address=0.0.0.0:10951"
+      - "--grpc-grace-period=1s"
+      - "--http-address=0.0.0.0:10952"
+      - "--http-grace-period=1s"
+      - "--label=receive=\"true\""
+      - "--objstore.config-file=/etc/thanos/bucket.yml"
+      - "--remote-write.address=0.0.0.0:9005"
+    volumes:
+      - ./thanos/:/etc/thanos/
+      - thanos_receive:/prometheus
+    expose:
+      - 10951
+      - 10952
+    depends_on:
+      - minio
+      - prometheus_remote
+    networks:
+      - thanos
+
+  thanos_store1:
+    image: thanosio/thanos:v0.19.0
+    container_name: thanos_store1
+    command:
+      - "store"
+      - "--debug.name=thanos_store1"
+      - "--log.level=debug"
+      - "--grpc-address=0.0.0.0:10915"
+      - "--grpc-grace-period=1s"
+      - "--http-address=0.0.0.0:10916"
+      - "--http-grace-period=1s"
+      - "--data-dir=/tmp/thanos/store"
+      - "--objstore.config-file=/etc/thanos/bucket.yml"
+    volumes:
+      - ./thanos/:/etc/thanos/
+    restart: unless-stopped
+    expose:
+      - 10915
+      - 10916
+    ports:
+      - '10916:10916'
+    depends_on:
+      - minio
+    networks:
+      - thanos
+
+  thanos_store2:
+    image: thanosio/thanos:v0.19.0
+    container_name: thanos_store2
+    command:
+      - "store"
+      - "--debug.name=thanos_store2"
+      - "--log.level=debug"
+      - "--grpc-address=0.0.0.0:10925"
+      - "--grpc-grace-period=1s"
+      - "--http-address=0.0.0.0:10926"
+      - "--http-grace-period=1s"
+      - "--data-dir=/tmp/thanos/store"
+      - "--objstore.config-file=/etc/thanos/bucket.yml"
+    volumes:
+      - ./thanos/:/etc/thanos/
+    restart: unless-stopped
+    expose:
+      - 10925
+      - 10926
+    ports:
+      - '10926:10926'
+    depends_on:
+      - minio
+    networks:
+      - thanos
+
+  thanos_query1:
+    image: thanosio/thanos:v0.19.0
+    container_name: thanos_query1
+    command:
+      - "query"
+      - "--debug.name=thanos_query1"
+      - "--log.level=debug"
+      - "--grpc-address=0.0.0.0:10913"
+      - "--grpc-grace-period=1s"
+      - "--http-address=0.0.0.0:10914"
+      - "--http-grace-period=1s"
+      - "--query.replica-label=prometheus"
+      - "--store=thanos_sidecar1:10911"
+      - "--store=thanos_sidecar2:10921"
+      - "--store=thanos_sidecar3:10931"
+      - "--store=thanos_sidecar4:10941"
+      - "--store=thanos_store1:10915"
+      - "--store=thanos_store2:10925"
+    restart: unless-stopped      
+    expose:
+      - 10913
+      - 10914
+    ports:
+      - 10914:10914
+    depends_on:
+      - minio
+      - thanos_sidecar1
+      - thanos_sidecar2
+      - thanos_sidecar3
+      - thanos_sidecar4
+      - thanos_store1
+      - thanos_store2
+    networks:
+      - thanos
+
+  thanos_query2:
+    image: thanosio/thanos:v0.19.0
+    container_name: thanos_query2
+    command:
+      - "query"
+      - "--debug.name=thanos_query2"
+      - "--log.level=debug"
+      - "--grpc-address=0.0.0.0:10923"
+      - "--grpc-grace-period=1s"
+      - "--http-address=0.0.0.0:10924"
+      - "--http-grace-period=1s"
+      - "--query.replica-label=prometheus"
+      - "--store=thanos_sidecar1:10911"
+      - "--store=thanos_sidecar2:10921"
+      - "--store=thanos_sidecar3:10931"
+      - "--store=thanos_sidecar4:10941"
+      - "--store=thanos_store1:10915"
+      - "--store=thanos_store2:10925"
+    restart: unless-stopped  
+    expose:
+      - 10923
+      - 10924
+    ports:
+      - 10924:10924
+    depends_on:
+      - minio
+      - thanos_sidecar1
+      - thanos_sidecar2
+      - thanos_sidecar3
+      - thanos_sidecar4
+      - thanos_store1
+      - thanos_store2
+    networks:
+      - thanos
+
+  thanos_query3:
+    image: thanosio/thanos:v0.19.0
+    container_name: thanos_query3
+    command:
+      - "query"
+      - "--debug.name=thanos_query3"
+      - "--log.level=debug"
+      - "--grpc-address=0.0.0.0:10933"
+      - "--grpc-grace-period=1s"
+      - "--http-address=0.0.0.0:10934"
+      - "--http-grace-period=1s"
+      - "--query.replica-label=prometheus"
+      - "--store=thanos_sidecar1:10911"
+      - "--store=thanos_sidecar2:10921"
+      - "--store=thanos_sidecar3:10931"
+      - "--store=thanos_sidecar4:10941"
+      - "--store=thanos_store1:10915"
+      - "--store=thanos_store2:10925"
+    restart: unless-stopped      
+    expose:
+      - 10933
+      - 10934
+    ports:
+      - 10934:10934
+    depends_on:
+      - minio
+      - thanos_sidecar1
+      - thanos_sidecar2
+      - thanos_sidecar3
+      - thanos_sidecar4
+      - thanos_store1
+      - thanos_store2
+    networks:
+      - thanos
+
+  thanos_query4:
+    image: thanosio/thanos:v0.19.0
+    container_name: thanos_query4
+    command:
+      - "query"
+      - "--debug.name=thanos_query4"
+      - "--log.level=debug"
+      - "--grpc-address=0.0.0.0:10943"
+      - "--grpc-grace-period=1s"
+      - "--http-address=0.0.0.0:10944"
+      - "--http-grace-period=1s"
+      - "--query.replica-label=prometheus"
+      - "--store=thanos_sidecar1:10911"
+      - "--store=thanos_sidecar2:10921"
+      - "--store=thanos_sidecar3:10931"
+      - "--store=thanos_sidecar4:10941"
+      - "--store=thanos_store1:10915"
+      - "--store=thanos_store2:10925"
+    restart: unless-stopped    
+    expose:
+      - 10943
+      - 10944
+    ports:
+      - 10944:10944
+    depends_on:
+      - minio
+      - thanos_sidecar1
+      - thanos_sidecar2
+      - thanos_sidecar3
+      - thanos_sidecar4
+      - thanos_store1
+      - thanos_store2
+    networks:
+      - thanos
+
+  thanos_query_frontend1:
+    image: thanosio/thanos:v0.19.0
+    container_name: thanos_query_frontend1
+    command:
+      - "query-frontend"
+      - "--debug.name=query_frontend1"
+      - "--log.level=debug"
+      - "--log.format=logfmt"
+      - "--http-address=0.0.0.0:19091"
+      - "--query-frontend.compress-responses"
+      - "--query-range.partial-response"
+      - "--query-frontend.downstream-url=http://thanos_query1:10914"
+      - "--query-frontend.downstream-url=http://thanos_query2:10924"
+      - "--query-frontend.downstream-url=http://thanos_query3:10934"
+      - "--query-frontend.downstream-url=http://thanos_query4:10944"            
+      - "--query-range.split-interval=24h"
+      - "--query-range.max-retries-per-request=5"
+      - "--query-frontend.log-queries-longer-than=5s"
+      - "--cache-compression-type=snappy"
+    restart: unless-stopped
+    ports:
+      - "19091:19091"
+    depends_on:
+      - thanos_query1
+      - thanos_query2
+      - thanos_query3
+      - thanos_query4
+    networks:
+      - thanos
+
+  thanos_query_frontend2:
+    image: thanosio/thanos:v0.19.0
+    container_name: thanos_query_frontend2
+    command:
+      - "query-frontend"
+      - "--debug.name=query_frontend2"
+      - "--log.level=debug"
+      - "--log.format=logfmt"
+      - "--http-address=0.0.0.0:19092"
+      - "--query-frontend.compress-responses"
+      - "--query-range.partial-response"
+      - "--query-frontend.downstream-url=http://thanos_query1:10914"
+      - "--query-frontend.downstream-url=http://thanos_query2:10924"
+      - "--query-frontend.downstream-url=http://thanos_query3:10934"
+      - "--query-frontend.downstream-url=http://thanos_query4:10944"            
+      - "--query-range.split-interval=24h"
+      - "--query-range.max-retries-per-request=5"
+      - "--query-frontend.log-queries-longer-than=5s"
+      - "--cache-compression-type=snappy"
+    restart: unless-stopped
+    ports:
+      - "19092:19092"
+    depends_on:
+      - thanos_query1
+      - thanos_query2
+      - thanos_query3
+      - thanos_query4
+    networks:
+      - thanos
+
+  thanos_compactor:
+    image: thanosio/thanos:v0.19.0
+    container_name: thanos_compactor
+    command:
+      - "compact"
+      - "--debug.name=thanos_compactor"
+      - "--log.level=debug"
+      - "--data-dir=/tmp/thanos_compactor"
+      - "--objstore.config-file=/etc/thanos/bucket.yml"
+      - "--http-address=0.0.0.0:10902"
+      - "--http-grace-period=2m"
+      - "--consistency-delay=30m"
+      - '--wait'
+    volumes:
+      - ./thanos/:/etc/thanos/
+    restart: unless-stopped
+    expose:
+      - 10901
+      - 10902
+    ports:
+      - "10902:10902"
+    depends_on:
+      - minio
+    networks:
+      - thanos    
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    user: root
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+    volumes:
+      - ./alertmanager/:/etc/alertmanager/
+      - alertmanager_data:/alertmanager
+    restart: unless-stopped
+    expose:
+      - 9093
+    ports:
+      - "9093:9093"
+    networks:
+      - thanos 
+
+  thanos_ruler:
+    image: thanosio/thanos:v0.19.0
+    container_name: thanos_ruler
+    volumes:
+      - ./thanos/:/etc/thanos/
+    command:
+      - 'rule'
+      - '--grpc-address=0.0.0.0:10091'
+      - '--http-address=0.0.0.0:10902'
+      - '--log.level=debug'
+      - '--data-dir=/data'
+      - '--eval-interval=15s'
+      - '--rule-file=/etc/thanos/*.rules.yaml'
+      - '--alertmanagers.url=http://alertmanager:9093'
+      - "--query=http://thanos_query_frontend1:19091"
+      - "--query=http://thanos_query_frontend2:19092" 
+      - '--objstore.config-file=/etc/thanos/bucket.yml'
+      - "--label=ruler_cluster=\"hn\""
+      - "--label=ruler_replica=\"r1\""
+    restart: unless-stopped
+    ports:
+      - 10903:10902
+    depends_on:
+      - minio
+      - thanos_query_frontend1
+      - thanos_query_frontend2
+    networks:
+      - thanos 
+
+  thanos_bucket_web:
+    image: thanosio/thanos:v0.19.0
+    container_name: thanos_bucket_web
+    command:
+      - 'tools'
+      - 'bucket'
+      - 'web'
+      - '--http-address=0.0.0.0:10902'
+      - '--log.level=debug'
+      - '--objstore.config-file=/etc/thanos/bucket.yml'
+      - '--refresh=5m'
+      - '--timeout=2m'
+      - '--label=replica'
+    volumes:
+      - ./thanos/:/etc/thanos/
+    ports:
+      - 10904:10902
+    restart: unless-stopped
+    depends_on:
+      - minio
+    networks:
+      - thanos 
+
+  grafana:
+    image: grafana/grafana:6.5.2
+    container_name: grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    networks:
+      - thanos
+
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: node_exporter
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - --collector.filesystem.ignored-mount-points
+      - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+    ports:
+      - 9100:9100
+    restart: unless-stopped
+    networks:
+      - thanos
+    
+  cadvisor:
+    image: gcr.io/google_containers/cadvisor:v0.36.0
+    container_name: cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+    networks:
+      - thanos
+      
+networks:
+  thanos: {}
+  
+volumes:
+  prometheus1_data: {}
+  prometheus2_data: {}
+  prometheus3_data: {}
+  prometheus4_data: {}
+  prometheus_remote_data: {}
+  minio_data: {}
+  grafana_data: {}
+  thanos_receive_data: {}
+  alertmanager_data: {}
