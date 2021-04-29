@@ -472,10 +472,7 @@ services:
       - "--http-address=0.0.0.0:19091"
       - "--query-frontend.compress-responses"
       - "--query-range.partial-response"
-      - "--query-frontend.downstream-url=http://thanos_query1:10914"
-      - "--query-frontend.downstream-url=http://thanos_query2:10924"
-      - "--query-frontend.downstream-url=http://thanos_query3:10934"
-      - "--query-frontend.downstream-url=http://thanos_query4:10944"            
+      - "--query-frontend.downstream-url=http://thanos_query1:10914"           
       - "--query-range.split-interval=24h"
       - "--query-range.max-retries-per-request=5"
       - "--query-frontend.log-queries-longer-than=5s"
@@ -485,9 +482,6 @@ services:
       - "19091:19091"
     depends_on:
       - thanos_query1
-      - thanos_query2
-      - thanos_query3
-      - thanos_query4
     networks:
       - thanos
 
@@ -502,10 +496,7 @@ services:
       - "--http-address=0.0.0.0:19092"
       - "--query-frontend.compress-responses"
       - "--query-range.partial-response"
-      - "--query-frontend.downstream-url=http://thanos_query1:10914"
-      - "--query-frontend.downstream-url=http://thanos_query2:10924"
-      - "--query-frontend.downstream-url=http://thanos_query3:10934"
-      - "--query-frontend.downstream-url=http://thanos_query4:10944"            
+      - "--query-frontend.downstream-url=http://thanos_query2:10924"           
       - "--query-range.split-interval=24h"
       - "--query-range.max-retries-per-request=5"
       - "--query-frontend.log-queries-longer-than=5s"
@@ -514,9 +505,54 @@ services:
     ports:
       - "19092:19092"
     depends_on:
-      - thanos_query1
       - thanos_query2
+    networks:
+      - thanos
+
+  thanos_query_frontend3:
+    image: thanosio/thanos:v0.19.0
+    container_name: thanos_query_frontend3
+    command:
+      - "query-frontend"
+      - "--debug.name=query_frontend3"
+      - "--log.level=debug"
+      - "--log.format=logfmt"
+      - "--http-address=0.0.0.0:19093"
+      - "--query-frontend.compress-responses"
+      - "--query-range.partial-response"
+      - "--query-frontend.downstream-url=http://thanos_query3:10934"          
+      - "--query-range.split-interval=24h"
+      - "--query-range.max-retries-per-request=5"
+      - "--query-frontend.log-queries-longer-than=5s"
+      - "--cache-compression-type=snappy"
+    restart: unless-stopped
+    ports:
+      - "19093:19093"
+    depends_on:
       - thanos_query3
+    networks:
+      - thanos
+      
+  thanos_query_frontend4:
+    image: thanosio/thanos:v0.19.0
+    container_name: thanos_query_frontend4
+    command:
+      - "query-frontend"
+      - "--debug.name=query_frontend4"
+      - "--log.level=debug"
+      - "--log.format=logfmt"
+      - "--http-address=0.0.0.0:19094"
+      - "--query-frontend.compress-responses"
+      - "--query-range.partial-response"
+      - "--query-frontend.downstream-url=http://thanos_query4:10944"            
+      - "--query-range.split-interval=24h"
+      - "--query-range.max-retries-per-request=5"
+      - "--query-frontend.log-queries-longer-than=5s"
+      - "--cache-compression-type=snappy"
+    restart: unless-stopped
+    ports:
+      - "19094:19094"
+    depends_on:
       - thanos_query4
     networks:
       - thanos
@@ -530,6 +566,7 @@ services:
       - "--log.level=debug"
       - "--data-dir=/tmp/thanos_compactor"
       - "--objstore.config-file=/etc/thanos/bucket.yml"
+      - "--grpc-address=0.0.0.0:10901"
       - "--http-address=0.0.0.0:10902"
       - "--http-grace-period=2m"
       - "--consistency-delay=30m"
@@ -571,8 +608,8 @@ services:
       - ./thanos/:/etc/thanos/
     command:
       - 'rule'
-      - '--grpc-address=0.0.0.0:10091'
-      - '--http-address=0.0.0.0:10902'
+      - '--grpc-address=0.0.0.0:10093'
+      - '--http-address=0.0.0.0:10904'
       - '--log.level=debug'
       - '--data-dir=/data'
       - '--eval-interval=15s'
@@ -585,7 +622,7 @@ services:
       - "--label=ruler_replica=\"r1\""
     restart: unless-stopped
     ports:
-      - 10903:10902
+      - 10904:10904
     depends_on:
       - minio
       - thanos_query_frontend1
@@ -600,7 +637,7 @@ services:
       - 'tools'
       - 'bucket'
       - 'web'
-      - '--http-address=0.0.0.0:10902'
+      - '--http-address=0.0.0.0:10905'
       - '--log.level=debug'
       - '--objstore.config-file=/etc/thanos/bucket.yml'
       - '--refresh=5m'
@@ -609,7 +646,7 @@ services:
     volumes:
       - ./thanos/:/etc/thanos/
     ports:
-      - 10904:10902
+      - 10905:10905
     restart: unless-stopped
     depends_on:
       - minio
@@ -617,7 +654,7 @@ services:
       - thanos 
 
   grafana:
-    image: grafana/grafana:6.5.2
+    image: grafana/grafana:7.5.5
     container_name: grafana
     volumes:
       - grafana_data:/var/lib/grafana
