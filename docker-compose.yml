@@ -566,7 +566,6 @@ services:
       - "--log.level=debug"
       - "--data-dir=/tmp/thanos_compactor"
       - "--objstore.config-file=/etc/thanos/bucket.yml"
-      - "--grpc-address=0.0.0.0:10901"
       - "--http-address=0.0.0.0:10902"
       - "--http-grace-period=2m"
       - "--consistency-delay=30m"
@@ -575,7 +574,6 @@ services:
       - ./thanos/:/etc/thanos/
     restart: unless-stopped
     expose:
-      - 10901
       - 10902
     ports:
       - "10902:10902"
