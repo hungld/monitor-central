@@ -3,7 +3,7 @@ global:
   evaluation_interval: 15s
   external_labels:
     cluster: 'NTL'
-    replica: 'r1'
+    replica: 'r2'
 
 rule_files:
   - 'alert.rules'
@@ -66,4 +66,4 @@ scrape_configs:
     scrape_interval: 5s
     static_configs:
       - targets:
-          - 'node-exporter:9100'
+          - 'node_exporter:9100'
