@@ -1,10 +1,18 @@
+global:
+  resolve_timeout: 5m
 route:
-    receiver: 'slack'
-
+  group_by: ['alertname']
+  group_wait: 30s
+  group_interval: 30s
+  repeat_interval: 5m
+  receiver: 'web.hook'
 receivers:
-    - name: 'slack'
-    #   slack_configs:
-    #       - send_resolved: true
-    #         username: '<username>'
-    #         channel: '#<channel-name>'
-    #         api_url: '<incomming-webhook-url>'
+- name: 'web.hook'
+  webhook_configs:
+  - url: 'http://prometheus_bot:9087/alert/-587712736'
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'dev', 'instance']

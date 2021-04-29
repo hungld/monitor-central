@@ -588,6 +588,7 @@ services:
     user: root
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
     volumes:
       - ./alertmanager/:/etc/alertmanager/
       - alertmanager_data:/alertmanager
@@ -698,7 +699,19 @@ services:
     restart: unless-stopped
     networks:
       - thanos
-      
+
+  prometheus_bot: 
+    image: tienbm90/prometheus-bot:0.0.1
+    container_name: telegrambot
+    volumes:
+      - ./telegrambot/:/etc/telegrambot/
+      - ./telegrambot/config.yml:/config.yml  
+    ports:
+      - 9087:9087
+    restart: unless-stopped
+    networks:
+      - thanos
+
 networks:
   thanos: {}
   
