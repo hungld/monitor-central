@@ -702,10 +702,9 @@ services:
 
   prometheus_bot: 
     image: tienbm90/prometheus-bot:0.0.1
-    container_name: telegrambot
+    container_name: prometheus_bot
     volumes:
       - ./telegrambot/:/etc/telegrambot/
-      - ./telegrambot/config.yml:/config.yml  
     ports:
       - 9087:9087
     restart: unless-stopped
