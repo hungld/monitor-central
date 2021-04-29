@@ -259,7 +259,7 @@ services:
       - "--remote-write.address=0.0.0.0:9005"
     volumes:
       - ./thanos/:/etc/thanos/
-      - thanos_receive:/prometheus
+      - thanos_receive_data:/prometheus
     expose:
       - 10951
       - 10952
